@@ -48,6 +48,7 @@ namespace ConsultaEleitoral
         // gerar arquivo
         // Referencia: https://www.codeproject.com/Articles/660478/Csharp-Create-and-Manipulate-Word-Documents-Progra
         // Referencia: https://stackoverflow.com/questions/38658848/c-sharp-net-docx-add-an-image-to-a-docx-file
+        // Install-Package DocX -Version 1.0.0.22
         private void Gera_Arquivo()
         {
             var eleitor = new Eleitor
