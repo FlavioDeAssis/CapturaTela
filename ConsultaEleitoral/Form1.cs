@@ -1,134 +1,306 @@
-﻿using System;
+﻿using ConsultaEleitoral.Class;
+using Novacode;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ConsultaEleitoral
 {
     public partial class Form1 : Form
     {
+        // incializa componetes
+        // webbrowser ScriptErrorsSuppressed true;
         public Form1()
-        {   
-            // incializa componetes
+        {
             InitializeComponent();
         }
-        
-        // inicia requisisição do conteudo do site utilizando class WebBrowser 
+
+        // inicia requisição 
         private void btnRequest_Click(object sender, EventArgs e)
         {
-            Navigate(urlTextBox.Text);
-        }
-
-        // tratamento da url inserida na box de UL
-        private void Navigate(String address)
-        {
-            if (String.IsNullOrEmpty(address)) return;
-            if (address.Equals("about:blank")) return;
-            if (!address.StartsWith("http://") &&
-                !address.StartsWith("https://"))
-            {
-                address = "http://" + address;
-            }
-            try
-            {
-                webBrowser.Navigate(new Uri(address));
-            }
-            catch (System.UriFormatException)
-            {
-                return;
-            }
-        }
-
-        // gerar a captura de imagem. salva imagem e arquivo
-        // obs: alterar letra do diretorio de destino
-        private void btnSave_Click(object sender, EventArgs e)
-        {
-            // captura imagem
-            pictureBox.Image = Tela.RetornaImagemControle(this.Handle, new Rectangle(0, 0, this.Width, this.Height));
-            // salva imagem
-            pictureBox.Image.Save(@"e:\teste.bmp", ImageFormat.Bmp);
-
-            // gerar arquivo word
-            // Referencia: http://www.andrealveslima.com.br/blog/index.php/2016/06/29/gerando-arquivos-do-word-com-c-e-vb-net/
-            // obs: talvez seja necessario obter o pacote atraves do gerenciado 
-            var wordApp = new Microsoft.Office.Interop.Word.Application();
-            wordApp.Visible = false;
-            var wordDoc = wordApp.Documents.Add();
-            
-            // adicionando imagem ao arquivo
-            var paragrafo5 = wordDoc.Paragraphs.Add();
-            paragrafo5.Range.InlineShapes.AddPicture(@"e:\teste.bmp");
-
-            // salva arquivo
-            wordDoc.SaveAs2(@"e:\" + txtNomeEleitor.Text + "_" + txtDataNascimento.Text +".docx");
-            wordApp.DisplayAlerts = Microsoft.Office.Interop.Word.WdAlertLevel.wdAlertsNone;
-            wordApp.Quit();
+            webBrowser.Navigate(urlTextBox.Text);            
         }
         
-    }
-
-    // classe para gerar imagem
-    //Referencia: https://msdn.microsoft.com/pt-br/library/dn630211.aspx
-    public class Tela
-    {
-        [DllImport("user32.dll", EntryPoint = "GetDC")]
-        static extern IntPtr GetDC(IntPtr ptr);
-        [DllImport("user32.dll", EntryPoint = "ReleaseDC")]
-        static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDc);
-        [DllImport("gdi32.dll", EntryPoint = "DeleteDC")]
-        static extern IntPtr DeleteDC(IntPtr hDc);
-        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleDC")]
-        static extern IntPtr CreateCompatibleDC(IntPtr hdc);
-        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleBitmap")]
-        static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int nWidth, int nHeight);
-        [DllImport("gdi32.dll", EntryPoint = "SelectObject")]
-        static extern IntPtr SelectObject(IntPtr hdc, IntPtr bmp);
-        [DllImport("gdi32.dll", EntryPoint = "BitBlt")]
-        static extern bool BitBlt(IntPtr hdcDest, int xDest, int yDest, int wDest, int hDest, IntPtr hdcSource, int xSrc, int ySrc, int RasterOp);
-        [DllImport("user32.dll", EntryPoint = "GetDesktopWindow")]
-        static extern IntPtr GetDesktopWindow();
-        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
-        static extern IntPtr DeleteObject(IntPtr hDc);
-
-        const int SRCCOPY = 13369376;
-
-        public struct SIZE
+        // captura de imagem
+        private void Captura_Imagem()
         {
-            public int cx;
-            public int cy;
-            
+            try
+            {
+                // captura imagem
+                System.Drawing.Image captura = Tela.RetornaImagemControle(this.Handle, new Rectangle(0, 0, this.Width, this.Height));
+
+                // salva imagem
+                // modificar pasta na sua maquina
+                captura.Save(@"e:\capturaConsulta.bmp", ImageFormat.Bmp);
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+
+            // gera arquivo
+            MessageBox.Show("Gerar Arquivo?");
+            Gera_Arquivo();
+
         }
 
-        public static Bitmap RetornaImagemControle(IntPtr controle, Rectangle area)
+        // gerar arquivo
+        // Referencia: https://www.codeproject.com/Articles/660478/Csharp-Create-and-Manipulate-Word-Documents-Progra
+        // Referencia: https://stackoverflow.com/questions/38658848/c-sharp-net-docx-add-an-image-to-a-docx-file
+        private void Gera_Arquivo()
         {
-            SIZE size;
-            IntPtr hBitmap;
-
-            IntPtr hDC = GetDC(controle);
-            IntPtr hMemDC = CreateCompatibleDC(hDC);
-
-            size.cx = area.Width - area.Left;
-            size.cy = area.Bottom - area.Top;
-
-            hBitmap = CreateCompatibleBitmap(hDC, size.cx, size.cy);
-
-            if (hBitmap != IntPtr.Zero)
+            var eleitor = new Eleitor
             {
-                IntPtr hOld = (IntPtr)SelectObject(hMemDC, hBitmap);
-                BitBlt(hMemDC, 0, 0, size.cx, size.cy, hDC, 0, 0, SRCCOPY);
-                SelectObject(hMemDC, hOld);
-                DeleteDC(hMemDC);
-                ReleaseDC(GetDesktopWindow(), hDC);
-                Bitmap bmp = System.Drawing.Image.FromHbitmap(hBitmap);
-                DeleteObject(hBitmap);
-                return bmp;
+                nome = "Flavio de Assis Santos",
+                data = "03/05/1980"
+            };
+
+            try
+            {
+                // modificar pasta na sua maquina
+                string caminhoImage = @"e:\capturaConsulta.bmp";
+                string caminhoPasta = @"e:\Temp\" + eleitor.nome.Replace(" ", "_") + "_" + eleitor.data.Replace("/", "_") + ".docx";
+
+                // gera arquivo na memoria
+                var doc = DocX.Create(caminhoPasta);
+
+                // insere imagem no arquivo
+                Novacode.Image image = doc.AddImage(caminhoImage);
+                Picture picture = image.CreatePicture();
+                Paragraph p1 = doc.InsertParagraph();
+                p1.AppendPicture(picture);
+
+                doc.Save();
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+
+        // webBrowser document
+        private void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            var currentWindow = webBrowser.Document;
+
+            var eleitor = new Eleitor
+            {
+                nome = "Flavio de Assis Santos",
+                data = "03/05/1980"
+            };
+
+            // verifica se existe frame do documento 
+            if (currentWindow.Window.Frames.Count > 0)
+            {
+                // busca elementos em cada frame
+                foreach (HtmlWindow frame in currentWindow.Window.Frames)
+                {
+                    try
+                    {
+                        var inputs = (currentWindow.GetElementsByTagName("input"));
+
+                        //loop lista elemento inputs
+                        for (int i = 0; i < inputs.Count; i++)
+                        {
+                            if (inputs[i].Name == "nomeEleitor") //unico elemento com nome "nomeEleitor"
+                            {
+                                inputs[i].SetAttribute("value", eleitor.nome);
+                            }
+                            else if (inputs[i].Name == "dataNascimento") //unico elemento com nome "vb_login_username"
+                            {
+                                inputs[i].SetAttribute("value", eleitor.data);
+                            }
+                        }
+
+                        for (int i = 0; i < inputs.Count; i++)
+                        {
+                            if (inputs[i].GetAttribute("value") == "Consultar") //unico elemento com nome "Consultar"
+                            {
+                                inputs[i].InvokeMember("click");
+                                
+                                // captura Imagem
+                                MessageBox.Show("Capturar Imagem?");
+                                Captura_Imagem();
+
+                                break;
+                            }
+                        }
+
+                    }
+                    catch (Exception ex) { MessageBox.Show(ex.Message); }
+                }
             }
             else
             {
-                return null;
+                try
+                {
+                    var inputs = (currentWindow.GetElementsByTagName("input"));
+
+                    //loop lista elemento inputs
+                    for (int i = 0; i < inputs.Count; i++)
+                    {
+                        if (inputs[i].Name == "nomeEleitor") //unico elemento com nome "nomeEleitor"
+                        {
+                            inputs[i].SetAttribute("value", eleitor.nome);
+                        }
+                        else if (inputs[i].Name == "dataNascimento") //unico elemento com nome "vb_login_username"
+                        {
+                            inputs[i].SetAttribute("value", eleitor.data);
+                        }
+                    }
+
+                    for (int i = 0; i < inputs.Count; i++)
+                    {
+                        if (inputs[i].GetAttribute("value") == "Consultar") //unico elemento com nome "Consultar"
+                        {
+                            inputs[i].InvokeMember("click");
+
+                            // captura Imagem
+                            MessageBox.Show("Capturar Imagem?");
+                            Captura_Imagem();
+
+                            break;
+                        }
+                    }
+
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message); }
             }
+
+            /*
+            // TODO: Analisar System.UnauthorizedAccessException
+            // https://stackoverflow.com/questions/21839674/access-in-iframe-and-setattribute-value
+            // https://social.msdn.microsoft.com/Forums/en-US/acc5a3e5-2406-4344-ad8d-6b816ad17d64/webbrowser-iframe?forum=vblanguage
+            // verifica se existe frames no documento 
+            //if (currentWindow.Window.Frames.Count > 0)
+            //{
+            //    HtmlWindowCollection iframes = currentWindow.Window.Frames;
+
+            //    foreach(HtmlWindow frame in iframes)
+            //    {
+            //        for (int i = 0; i < iframes.Count; i++)
+            //        {
+            //            HtmlElementCollection inputs = iframes[i].Document.GetElementsByTagName("input");
+
+            //            //loop lista elemento inputs
+            //            for (int j = 0; j < inputs.Count; j++)
+            //            {
+            //                if (inputs[j].Name == "nomeEleitor") //unico elemento com nome "nomeEleitor"
+            //                {
+            //                    inputs[j].SetAttribute("value", eleitor.nome);
+            //                }
+            //                else if (inputs[j].Name == "dataNascimento") //unico elemento com nome "vb_login_username"
+            //                {
+            //                    inputs[j].SetAttribute("value", eleitor.data);
+            //                }
+
+            //            }
+            //        }
+
+            //    }
+
+            //}
+            */
+
+        }
+    }
+
+}
+
+/*
+ // Outros metodos            
+ 
+    HtmlWindow currentWindow = webBrowser.Document.Window;
+
+            foreach (HtmlWindow frame in currentWindow.Frames)
+            {
+                if (frame.Name == "windowZ")
+                {
+                    HtmlElementCollection inputs = frame.Document.GetElementsByTagName("input");
+
+                    foreach (HtmlElement curElement in inputs)
+                    {
+                        string controlName = curElement.GetAttribute("Name").ToString();
+
+                        if (controlName == "nomeEleitor")
+                        {
+                            curElement.SetAttribute("value", eleitor.nome);
+                        }
+                        else if (controlName == "dataNascimento")
+                        {
+                            curElement.SetAttribute("value", eleitor.data);
+                        }                        
+                    }
+                }
+            }
+ // inspeciona o documento  
+        private void Documento_WebBrowser(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            var currentWindow = ((WebBrowser)sender).Document.Window;
+            
+            // limpa para evitar loop no sender 
+            ((WebBrowser)sender).DocumentCompleted -= Documento_WebBrowser;
+            
+            var eleitor = new Eleitor
+            {
+                nome = "Flavio de Assis Santos",
+                data = "03/05/1980"
+            };
+
+            try
+            {
+                var inputs = (currentWindow.Document.GetElementsByTagName("input"));
+
+                //loop lista elemento inputs
+                for (int i = 0; i < inputs.Count; i++)
+                {
+                    if (inputs[i].Name == "nomeEleitor") //unico elemento com nome "nomeEleitor"
+                    {
+                        inputs[i].SetAttribute("value", eleitor.nome);
+                    }
+                    else if (inputs[i].Name == "dataNascimento") //unico elemento com nome "vb_login_username"
+                    {
+                        inputs[i].SetAttribute("value", eleitor.data);
+                    }
+                }
+
+                for (int i = 0; i < inputs.Count; i++)
+                {
+                    if (inputs[i].GetAttribute("value") == "Consultar") //unico elemento com nome "Consultar"
+                    {
+                        inputs[i].InvokeMember("click");
+                        break;
+                    }
+                }
+
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+
         }
 
-    }
-}
+        // trata url da box
+        private void Navigate(String address)
+        {
+            if (String.IsNullOrEmpty(address) || address.Equals("about:blank"))
+            {
+                MessageBox.Show("Informe o endereço");
+            }
+            else
+            {
+                if (!address.StartsWith("http://") &&
+                !address.StartsWith("https://"))
+                {
+                    address = "http://" + address;
+                }
+                try
+                {
+                    webBrowser.Navigate(new Uri(address));           
+
+                }
+                catch (System.UriFormatException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+
+        }
+
+*/
