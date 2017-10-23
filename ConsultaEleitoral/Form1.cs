@@ -84,8 +84,8 @@ namespace ConsultaEleitoral
 
             var eleitor = new Eleitor
             {
-                nome = "Flavio de Assis Santos",
-                data = "03/05/1980"
+                nome = "Seu Nome",
+                data = "Data de Nascimento"
             };
 
             // verifica se existe frame do documento 
@@ -205,103 +205,3 @@ namespace ConsultaEleitoral
     }
 
 }
-
-/*
- // Outros metodos            
- 
-    HtmlWindow currentWindow = webBrowser.Document.Window;
-
-            foreach (HtmlWindow frame in currentWindow.Frames)
-            {
-                if (frame.Name == "windowZ")
-                {
-                    HtmlElementCollection inputs = frame.Document.GetElementsByTagName("input");
-
-                    foreach (HtmlElement curElement in inputs)
-                    {
-                        string controlName = curElement.GetAttribute("Name").ToString();
-
-                        if (controlName == "nomeEleitor")
-                        {
-                            curElement.SetAttribute("value", eleitor.nome);
-                        }
-                        else if (controlName == "dataNascimento")
-                        {
-                            curElement.SetAttribute("value", eleitor.data);
-                        }                        
-                    }
-                }
-            }
- // inspeciona o documento  
-        private void Documento_WebBrowser(object sender, WebBrowserDocumentCompletedEventArgs e)
-        {
-            var currentWindow = ((WebBrowser)sender).Document.Window;
-            
-            // limpa para evitar loop no sender 
-            ((WebBrowser)sender).DocumentCompleted -= Documento_WebBrowser;
-            
-            var eleitor = new Eleitor
-            {
-                nome = "Flavio de Assis Santos",
-                data = "03/05/1980"
-            };
-
-            try
-            {
-                var inputs = (currentWindow.Document.GetElementsByTagName("input"));
-
-                //loop lista elemento inputs
-                for (int i = 0; i < inputs.Count; i++)
-                {
-                    if (inputs[i].Name == "nomeEleitor") //unico elemento com nome "nomeEleitor"
-                    {
-                        inputs[i].SetAttribute("value", eleitor.nome);
-                    }
-                    else if (inputs[i].Name == "dataNascimento") //unico elemento com nome "vb_login_username"
-                    {
-                        inputs[i].SetAttribute("value", eleitor.data);
-                    }
-                }
-
-                for (int i = 0; i < inputs.Count; i++)
-                {
-                    if (inputs[i].GetAttribute("value") == "Consultar") //unico elemento com nome "Consultar"
-                    {
-                        inputs[i].InvokeMember("click");
-                        break;
-                    }
-                }
-
-            }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
-
-        }
-
-        // trata url da box
-        private void Navigate(String address)
-        {
-            if (String.IsNullOrEmpty(address) || address.Equals("about:blank"))
-            {
-                MessageBox.Show("Informe o endereço");
-            }
-            else
-            {
-                if (!address.StartsWith("http://") &&
-                !address.StartsWith("https://"))
-                {
-                    address = "http://" + address;
-                }
-                try
-                {
-                    webBrowser.Navigate(new Uri(address));           
-
-                }
-                catch (System.UriFormatException ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-            }
-
-        }
-
-*/
